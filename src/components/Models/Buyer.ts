@@ -1,4 +1,5 @@
 import { IBuyer, TBuyerErrors } from "../../types";
+import { EventEmitter } from "../base/Events";
 
 export class Buyer {
 
@@ -9,11 +10,14 @@ export class Buyer {
     phone: '',
   };
 
+  constructor(private events: EventEmitter) {}
+
   setData(data: Partial<IBuyer>): void {
     this.data = {
       ...this.data,
       ...data,
     };
+    this.events.emit('buyer:changed');
   }
 
   getData(): IBuyer {
@@ -27,6 +31,7 @@ export class Buyer {
       email: '',
       phone: '',
     };
+    this.events.emit('buyer:changed');
   }
 
   validate(): TBuyerErrors {

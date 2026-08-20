@@ -1,12 +1,16 @@
 import { IProduct } from "../../types";
+import { EventEmitter } from "../base/Events";
 
 export class Products {
 
   private items: IProduct[] = [];
   private preview: IProduct | null = null;
 
+  constructor(private events: EventEmitter) {}
+
   setItems(items: IProduct[]): void {
     this.items = items;
+    this.events.emit('products:changed');
   }
 
   getItems(): IProduct[] {
@@ -19,6 +23,7 @@ export class Products {
 
   setPreview(product: IProduct): void {
     this.preview = product;
+    this.events.emit('preview:changed');
   }
 
   getPreview(): IProduct | null {
