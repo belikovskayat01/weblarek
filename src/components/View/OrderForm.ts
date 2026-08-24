@@ -1,5 +1,7 @@
 import { Form } from "./Form";
 import { IEvents } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
+import { TPayment } from "../../types";
 
 export class OrderForm extends Form<Record<string, unknown>> {
   protected paymentButtons: HTMLButtonElement[];
@@ -8,16 +10,11 @@ export class OrderForm extends Form<Record<string, unknown>> {
   constructor(container: HTMLFormElement, events: IEvents) {
     super(container, events);
 
-    this.paymentButtons = Array.from(container.querySelectorAll('.button_alt')) as HTMLButtonElement[];
-    this.addressInput = container.querySelector('input[name="address"]') as HTMLInputElement;
+    this.paymentButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.button_alt'));
+    this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]', container);
 
     this.paymentButtons.forEach((button) => {
       button.addEventListener('click', () => {
-        this.paymentButtons.forEach((item) => {
-          item.classList.remove('button_alt-active');
-        });
-
-        button.classList.add('button_alt-active');
         events.emit('order:payment', {
           payment: button.name,
         });
@@ -29,5 +26,17 @@ export class OrderForm extends Form<Record<string, unknown>> {
         address: this.addressInput.value,
       });
     });
+  }
+
+  set payment(value: TPayment | null) {
+    this.paymentButtons.forEach((button) => {
+      button.classList.toggle('button_alt-active', 
+        button.name === value
+      );
+    });
+  }
+
+  set address(value: string) {
+    this.addressInput.value = value;
   }
 } 

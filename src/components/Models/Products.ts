@@ -1,12 +1,12 @@
 import { IProduct } from "../../types";
-import { EventEmitter } from "../base/Events";
+import { IEvents } from "../base/Events";
 
 export class Products {
 
   private items: IProduct[] = [];
   private preview: IProduct | null = null;
 
-  constructor(private events: EventEmitter) {}
+  constructor(private events: IEvents) {}
 
   setItems(items: IProduct[]): void {
     this.items = items;

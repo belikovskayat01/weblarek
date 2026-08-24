@@ -1,5 +1,6 @@
 import { Form } from "./Form";
 import { IEvents } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 export class ContactsForm extends Form<Record<string, unknown>> {
   protected emailInput: HTMLInputElement;
@@ -8,8 +9,8 @@ export class ContactsForm extends Form<Record<string, unknown>> {
   constructor(container: HTMLFormElement, events: IEvents) {
     super(container, events);
 
-    this.emailInput = container.querySelector('input[name="email"]') as HTMLInputElement;
-    this.phoneInput = container.querySelector('input[name="phone"]') as HTMLInputElement;
+    this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]', container);
+    this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', container);
 
     this.emailInput.addEventListener('input', () => {
       events.emit('contacts:email', {
@@ -22,10 +23,12 @@ export class ContactsForm extends Form<Record<string, unknown>> {
         phone: this.phoneInput.value,
       });
     });
-
-    container.addEventListener('submit', (event) => {
-      event.preventDefault();
-      events.emit('contacts:submit');
-    });
   }
+    set email(value: string) {
+      this.emailInput.value = value;
+    }
+
+    set phone(value: string) {
+      this.phoneInput.value = value;
+    }
 }

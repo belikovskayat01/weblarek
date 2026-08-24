@@ -1,9 +1,9 @@
 import { IProduct } from "../../types";
-import { EventEmitter } from "../base/Events";
+import { IEvents } from "../base/Events";
 
 export class Basket {
   private items: IProduct[] = [];
-  constructor(private events: EventEmitter) {}
+  constructor(private events: IEvents) {}
 
   getItems(): IProduct[] {
     return this.items;

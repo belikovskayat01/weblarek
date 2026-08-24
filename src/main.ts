@@ -14,9 +14,12 @@ import { CardBasket } from './components/View/CardBasket';
 import { OrderForm } from './components/View/OrderForm';
 import { ContactsForm } from './components/View/ContactsForm';
 import { Success } from './components/View/Success';
+import { Header } from './components/View/Header';
+import { Gallery } from './components/View/Gallery';
 
 import { API_URL } from './utils/constants';
 import { cloneTemplate } from './utils/utils';
+import { TPayment } from './types';
 
 
 const events = new EventEmitter();
@@ -24,9 +27,21 @@ const events = new EventEmitter();
 const products = new Products(events);
 const basket = new Basket(events);
 const buyer = new Buyer(events);
-const gallery = document.querySelector('.gallery') as HTMLElement;
+
+const header = new Header(
+  document.querySelector('.header') as HTMLElement,
+  events
+);
+
+const gallery = new Gallery(
+  document.querySelector('.gallery') as HTMLElement
+);
 const modal = new Modal(
-  document.querySelector('#modal-container') as HTMLElement,
+  document.querySelector('#modal-container') as HTMLElement
+);
+
+const cardPreview = new CardPreview(
+  cloneTemplate<HTMLElement>('#card-preview'),
   events
 );
 
@@ -50,17 +65,25 @@ const success = new Success(
   events
 );
 
+basketView.setItems([]);
+basketView.setPrice(0);
+basketView.setButtonDisabled(true);
+
+header.counter = 0;
+
 events.on('products:changed', () => {
   const cards = products.getItems().map((product) => {
     const card = new CardCatalog(
       cloneTemplate<HTMLElement>('#card-catalog'),
-      events
+      () => {
+        events.emit('card:select', { id: product.id});
+      }
     );
 
     return card.render(product);
   });
 
-  gallery.replaceChildren(...cards);
+  gallery.items = cards;
 });
 
 events.on<{ id: string }>('card:select', ({ id }) => {
@@ -74,7 +97,7 @@ events.on<{ id: string }>('card:select', ({ id }) => {
 events.on('card:action', () => {
   const product = products.getPreview();
 
-  if(!product) {
+  if (!product) {
     return;
   }
 
@@ -101,20 +124,27 @@ events.on('basket:changed', () => {
   const cards = basket.getItems().map((product, index) => {
     const card = new CardBasket(
       cloneTemplate<HTMLElement>('#card-basket'),
-      events
+      () => {
+        events.emit('basket:remove', { id: product.id });
+      }
     );
 
-    card.render(product);
-    card.index = index + 1;
-
-    return card.render();
+   return card.render({
+    ...product,
+    index: index + 1,
+   });
   });
 
   basketView.setItems(cards);
   basketView.setPrice(basket.getTotal());
   basketView.setButtonDisabled(basket.getCount() === 0);
 
-  basketCounter.textContent = String(basket.getCount());
+  header.counter = basket.getCount();
+});
+
+events.on('basket:open', () => {
+  modal.contentElement = basketView.render();
+  modal.open();
 });
 
 events.on('basket:order', () => {
@@ -122,7 +152,7 @@ events.on('basket:order', () => {
   modal.open();
 }); 
 
-events.on('form:submit', () => {
+events.on('order:submit', () => {
   modal.contentElement = contactsForm.render();
   modal.open();
 });
@@ -152,9 +182,9 @@ events.on('contacts:submit', () => {
     });
 });
 
-events.on<{ payment: string}>('order:payment', ({ payment }) => {
+events.on<{ payment: TPayment}>('order:payment', ({ payment }) => {
   buyer.setData({
-    payment: payment as 'card' | 'cash',
+    payment,
   });
 });
 
@@ -183,80 +213,54 @@ events.on('preview:changed', () => {
     return;
   }
 
-  const card = new CardPreview(
-    cloneTemplate<HTMLElement>('#card-preview'),
-    events
-  );
   
   const inBasket = basket.getItems().some((item) => item.id === product.id);
 
   if (product.price === null) {
-    card.buttonText = 'Недоступно';
-    card.buttonDisabled = true;
+    cardPreview.buttonText = 'Недоступно';
+    cardPreview.buttonDisabled = true;
   } else if (inBasket) {
-    card.buttonText = 'Удалить из корзины';
-    card.buttonDisabled = false;
+    cardPreview.buttonText = 'Удалить из корзины';
+    cardPreview.buttonDisabled = false;
   } else {
-    card.buttonText = 'Купить';
-    card.buttonDisabled = false;
+    cardPreview.buttonText = 'Купить';
+    cardPreview.buttonDisabled = false;
   }
 
-  modal.contentElement = card.render(product);
+  modal.contentElement = cardPreview.render(product);
   modal.open();
-});
-
-events.on('modal:close', () => {
-  modal.close();
 });
 
 events.on('success:close', () => {
   modal.close();
 });
 
-const basketButton = document.querySelector('.header__basket') as HTMLButtonElement;
-const basketCounter = document.querySelector('.header__basket-counter') as HTMLElement;
-
-basketButton.addEventListener( 'click', () => {
-  events.emit('basket:open');
-});
-
-events.on('basket:open', () => {
-  const cards = basket.getItems().map((product, index) => {
-    const card = new CardBasket(
-      cloneTemplate<HTMLElement>('#card-basket'),
-      events  
-    );
-    
-    card.render(product);
-    card.index = index + 1;
-
-    return card.render();
-  });
-
-  basketView.setItems(cards);
-  basketView.setPrice(basket.getTotal());
-  basketView.setButtonDisabled(basket.getCount() === 0);
-
-  modal.contentElement = basketView.render();
-  modal.open();
-});
-
 events.on('buyer:changed', () => {
   const data = buyer.getData();
   const errors = buyer.validate();
 
-  const valid = Object.keys(errors).length === 0;
+  orderForm.payment = data.payment;
+  orderForm.address = data.address;
 
-  orderForm.valid = Boolean(data.payment && data.address);
-  contactsForm.valid = valid;
+  contactsForm.email = data.email;
+  contactsForm.phone = data.phone;
 
-  if (!data.payment) {
-    orderForm.errorsText = 'Выберите способ оплаты';
-  } else if (!data.address) {
-    orderForm.errorsText = 'Укажите адрес';
-  } else {
-    orderForm.errorsText = '';
-  }
+  orderForm.valid = !errors.payment && !errors.address;
+  contactsForm.valid = !errors.email && !errors.phone;
+
+  orderForm.errorsText = [
+    errors.payment,
+    errors.address,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  contactsForm.errorsText = [
+    errors.email,
+    errors.phone,
+  ]
+    .filter(Boolean)
+    .join(' ');
 });
 
 const api = new Api(API_URL);

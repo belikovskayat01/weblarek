@@ -1,5 +1,6 @@
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 export abstract class Form<T> extends Component<T> {
   protected submitButton: HTMLButtonElement;
@@ -8,21 +9,14 @@ export abstract class Form<T> extends Component<T> {
   constructor(container: HTMLFormElement, protected events: IEvents) {
     super(container);
 
-    this.submitButton = container.querySelector('button[type="submit"]') as HTMLButtonElement;
-    this.errors = container.querySelector('.form__errors') as HTMLElement;
+    this.submitButton = ensureElement<HTMLButtonElement>('button[type="submit"]', container);
+    this.errors = ensureElement<HTMLElement>('.form__errors', container);
 
-    container.addEventListener('input', (event) => {
-      const target = event.target as HTMLInputElement;
-
-      events.emit('form:input', {
-        field: target.name,
-        value: target.value,
-      });
-    });
+    
 
     container.addEventListener('submit', (event) => {
       event.preventDefault();
-      events.emit('form:submit');
+      this.events.emit(`${this.container.getAttribute('name')}:submit`);
     });
   }
 

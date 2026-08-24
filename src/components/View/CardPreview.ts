@@ -2,6 +2,7 @@ import { IProduct } from "../../types";
 import { Card } from "./Card";
 import { CDN_URL, categoryMap } from "../../utils/constants";
 import { IEvents } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 export class CardPreview extends Card<IProduct> {
   protected categoryElement: HTMLElement;
@@ -12,10 +13,10 @@ export class CardPreview extends Card<IProduct> {
   constructor(container: HTMLElement, events: IEvents) {
     super(container);
 
-    this.categoryElement = container.querySelector('.card__category') as HTMLElement;
-    this.imageElement = container.querySelector('.card__image') as HTMLImageElement;
-    this.descriptionElement = container.querySelector('.card__text') as HTMLElement;
-    this.buttonElement = container.querySelector('.card__button') as HTMLButtonElement;
+    this.categoryElement = ensureElement<HTMLElement>('.card__category', container);
+    this.imageElement = ensureElement<HTMLImageElement>('.card__image', container);
+    this.descriptionElement = ensureElement<HTMLElement>('.card__text', container);
+    this.buttonElement = ensureElement<HTMLButtonElement>('.card__button', container);
 
     this.buttonElement.addEventListener('click', () => {
       events.emit('card:action');

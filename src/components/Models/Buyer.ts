@@ -1,5 +1,5 @@
 import { IBuyer, TBuyerErrors } from "../../types";
-import { EventEmitter } from "../base/Events";
+import { IEvents } from "../base/Events";
 
 export class Buyer {
 
@@ -10,7 +10,7 @@ export class Buyer {
     phone: '',
   };
 
-  constructor(private events: EventEmitter) {}
+  constructor(private events: IEvents) {}
 
   setData(data: Partial<IBuyer>): void {
     this.data = {

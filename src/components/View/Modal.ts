@@ -1,18 +1,24 @@
 import { Component } from "../base/Component";
-import { IEvents } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 export class Modal extends Component<HTMLElement> {
   protected content: HTMLElement;
   protected closeButton: HTMLButtonElement;
 
-  constructor(container: HTMLElement, events: IEvents) {
+  constructor(container: HTMLElement) {
     super(container);
 
-    this.content = container.querySelector('.modal__content') as HTMLElement;
-    this.closeButton = container.querySelector('.modal__close') as HTMLButtonElement;
+    this.content = ensureElement<HTMLElement>('.modal__content', container);
+    this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', container);
 
     this.closeButton.addEventListener('click', () => {
-      events.emit('modal:close');
+      this.close();
+    });
+
+    this.container.addEventListener('click', (event) => {
+      if (event.target === this.container) {
+        this.close();
+      }
     });
   }
 

@@ -1,5 +1,6 @@
 import { Component } from "../base/Component";
 import { IProduct } from "../../types";
+import { ensureElement } from "../../utils/utils";
 
 export abstract class Card<T extends IProduct> extends Component<T> {
   protected titleElement: HTMLElement;
@@ -8,8 +9,8 @@ export abstract class Card<T extends IProduct> extends Component<T> {
   constructor(container: HTMLElement) {
     super(container);
 
-    this.titleElement = container.querySelector('.card__title') as HTMLElement;
-    this.priceElement = container.querySelector('.card__price') as HTMLElement;
+    this.titleElement = ensureElement<HTMLElement>('.card__title', container);
+    this.priceElement = ensureElement<HTMLElement>('.card__price', container);
   }
 
   set title(value: string) {
